@@ -20,14 +20,13 @@ if __name__ == '__main__':
 
     search_query = POKEMON_ENDPOINT + POKEMON_SEARCH_PARAMS
     print(f'asking for all pokemons: {search_query}')
-    all_pokemons = json.loads(requests.get(search_query, headers={'User-Agent':
-                                                                      CHROME_UA}).content)
+    all_pokemons = requests.get(search_query, headers={'User-Agent': CHROME_UA}).json()
     print(f'got {all_pokemons["count"]} pokemons')
 
     with open(POKE_DETAILS_SAVE_PATH, 'w') as f:
         for i, pokemon in enumerate(islice(all_pokemons['results'], 20)):
             print(f'{i}. found {pokemon["name"]}: getting details from {pokemon["url"]}')
-            pokemon_detail = json.loads(requests.get(pokemon['url']).content)
+            pokemon_detail = requests.get(pokemon['url']).json()
             f.write(json.dumps(pokemon_detail) + '\n')
             for cry_key, cry in pokemon_detail.get('cries', dict()).items():
                 download(cry, f"{CRY_SAVE_PATH}/{cry_key}_{cry.split('/')[-1]}")
