@@ -1,0 +1,72 @@
+openapi: 3.0.0
+info:
+  title: Pokémon Team Builder API
+  description: API per la gestione dei team Pokémon.
+  version: 1.0.0
+
+paths:
+  /teams:
+    post:
+      # CHIAVE: operationId definisce la funzione Python da chiamare
+      operationId: team_operations.create_team
+      summary: Crea un nuovo team Pokémon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewTeamRequest'
+      responses:
+        '201':
+          description: Team creato con successo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          description: Richiesta non valida
+
+
+components:
+  schemas:
+    NewTeamRequest:
+      type: object
+      required:
+        - name
+        - trainer
+      properties:
+        name:
+          type: string
+          description: Nome del team
+          example: Blue Thunder
+        trainer:
+          type: string
+          description: Nome dell'allenatore
+          example: Ash
+        pokemon_names:
+          type: array
+          description: Lista dei nomi Pokémon nel team (massimo 6)
+          maxItems: 6
+          items:
+            type: string
+          example:
+            - bulbasaur
+            - eevee
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID univoco del team
+          example: 101
+        name:
+          type: string
+          example: Blue Thunder
+        trainer:
+          type: string
+          example: Ash
+        members_count:
+          example: 2
+          type: integer
+          description: Numero attuale di Pokémon nel team

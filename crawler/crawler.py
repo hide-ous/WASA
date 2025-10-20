@@ -10,7 +10,6 @@ CHROME_UA = "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML
 
 API_BASE_URL = 'https://pokeapi.co/api/v2'
 POKEMON_ENDPOINT = f'{API_BASE_URL}/pokemon/'
-
 POKEMON_SEARCH_PARAMS = '?limit=100000&offset=0'
 
 CRY_SAVE_PATH = 'cries'
