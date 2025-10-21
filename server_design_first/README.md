@@ -7,7 +7,7 @@
      ```cmd
      curl -X POST http://127.0.0.1:8080/api/teams -H "Content-Type: application/json" -d "{\"name\":\"Team Elettro\",\"trainer\":\"Lt. Surge\",\"pokemon_names\":[\"Raichu\",\"Electabuzz\"]}"
      ```
-   - *nix: 
+   - Unix: 
     ```shell
          curl -X POST http://127.0.0.1:8080/api/teams \
          -H "Content-Type: application/json" \

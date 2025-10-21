@@ -1,0 +1,134 @@
+openapi: 3.0.0
+info:
+  title: Pokémon Team Builder API
+  version: 1.0.0
+  description: Un'API RESTful per costruire e gestire i team Pokémon, con arricchimento dei dati da PokéAPI.
+
+servers:
+  - url: /api
+
+paths:
+  /teams:
+    post:
+      summary: Crea un nuovo Team Pokémon
+      operationId: team_operations_full.create_team # Collegamento Python (Attività 1)
+      tags:
+        - Team Management
+
+      requestBody:
+        description: Oggetto Team da creare (nome, allenatore, lista di Pokémon)
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamRequest'
+
+      responses:
+        '201':
+          description: Team creato con successo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamResponse'
+        '400':
+          description: Richiesta non valida.
+
+  /teams/{team_id}:
+    get:
+      summary: Ottiene i dettagli completi di un Team Pokémon
+      operationId: team_operations_full.get_team_by_id
+      tags:
+        - Team Management
+      parameters:
+        - in: path
+          name: team_id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID univoco del Team da recuperare.
+      responses:
+        '200':
+          description: Dettagli del Team recuperati con successo, inclusi i dettagli dei Pokémon arricchiti.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullTeamResponse'
+        '404':
+          description: Team non trovato.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Team Not Found
+
+components:
+  schemas:
+    # Input per POST /teams
+    TeamRequest:
+      type: object
+      description: Dati essenziali per la creazione di un Team.
+      properties:
+        name:
+          type: string
+          description: Nome del Team (es. "Team Fuoco").
+        trainer:
+          type: string
+          description: Nome dell'allenatore.
+        pokemon_names:
+          type: array
+          description: Lista dei nomi dei Pokémon nel Team.
+          items:
+            type: string
+      required:
+        - name
+        - trainer
+        - pokemon_names
+
+    TeamResponse:
+      allOf:
+        - $ref: '#/components/schemas/TeamRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: ID univoco assegnato al Team.
+              example: 550e8400-e29b-41d4-a716-446655440000
+          required:
+            - id
+
+    PokemonDetail:
+      type: object
+      description: Dettagli arricchiti di un Pokémon (Tipo, Abilità).
+      properties:
+        name:
+          type: string
+          description: Nome del Pokémon.
+        types:
+          type: array
+          description: Tipi elementali.
+          items:
+            type: string
+        abilities:
+          type: array
+          description: Abilità del Pokémon.
+          items:
+            type: string
+      required:
+        - name
+        - types
+        - abilities
+
+    FullTeamResponse:
+      allOf:
+        - $ref: '#/components/schemas/TeamResponse'
+        - type: object
+          properties:
+            pokemon_details:
+              type: array
+              description: Dettagli arricchiti per ciascun Pokémon del Team.
+              items:
+                $ref: '#/components/schemas/PokemonDetail'
