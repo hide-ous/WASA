@@ -43,8 +43,8 @@ paths:
         - in: path
           name: team_id
           schema:
-            type: string
-            format: uuid
+            type: number
+            format: integer
           required: true
           description: ID univoco del Team da recuperare.
       responses:
@@ -94,9 +94,10 @@ components:
         - type: object
           properties:
             id:
-              type: string
+              type: number
+              format: integer
               description: ID univoco assegnato al Team.
-              example: 550e8400-e29b-41d4-a716-446655440000
+              example: 2
           required:
             - id
 

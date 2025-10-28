@@ -1,4 +1,3 @@
-import uuid
 import requests
 from http import HTTPStatus
 from typing import Dict, Any, Tuple, List
@@ -38,6 +37,8 @@ def _get_pokemon_details_sync(pokemon_name: str) -> Dict[str, Any]:
 
         response.raise_for_status()
         data = response.json()
+        print('got from pokeapi:')
+        print(data)
 
         # Struttura dati come definita in FullTeamResponse -> PokemonDetail
         details = {
@@ -90,7 +91,7 @@ def create_team(body: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 
     # 4. Prepara la risposta (TeamResponse)
     response_data = {
-        "id": str(new_team["id"]),  # Connexion/OpenAPI si aspetta una stringa/UUID per l'ID
+        "id": new_team["id"],
         "name": new_team["name"],
         "trainer": new_team["trainer"],
         "pokemon_names": new_team["pokemon_names"],
@@ -103,7 +104,7 @@ def create_team(body: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
 # ----------------------------------------------------------------------
 # Endpoint: GET /teams/{team_id}
 # ----------------------------------------------------------------------
-def get_team_by_id(team_id: str) -> Tuple[Dict[str, Any], int]:
+def get_team_by_id(team_id: int) -> Tuple[Dict[str, Any], int]:
     """
     Implementa l'operazione 'get_team_by_id'.
     Recupera un team e arricchisce i dati dei Pokémon da PokéAPI.
@@ -133,13 +134,14 @@ def get_team_by_id(team_id: str) -> Tuple[Dict[str, Any], int]:
     # NOTA: Queste sono le chiamate di rete bloccanti!
     for name in team.get('pokemon_names', []):
         details = _get_pokemon_details_sync(name)
+        print(details)
         detailed_pokemon.append(details)
 
     # 2. Struttura l'oggetto FullTeamResponse
-    enriched_team['id'] = str(enriched_team['id'])  # Conversione ID a stringa
+    enriched_team['id'] = enriched_team['id']  # Conversione ID a stringa
     enriched_team['pokemon_details'] = detailed_pokemon
 
-    # Rimuoviamo la chiave 'id' che era int e ne lasciamo solo una strig
+    # Rimuoviamo la chiave 'id' che era int e ne lasciamo solo una string
     # Rimuoviamo la chiave 'members_count' aggiunta nella create_team
     if 'members_count' in enriched_team:
         del enriched_team['members_count']
