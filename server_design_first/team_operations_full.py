@@ -20,7 +20,6 @@ def _get_pokemon_details_sync(pokemon_name: str) -> Dict[str, Any]:
     Recupera i dettagli di un singolo Pokémon da PokéAPI (Sincrona/Bloccante).
     Questa è la parte che blocca il thread in Connexion/Uvicorn.
     """
-    # Connexion dovrebbe passare l'ID come stringa, ma il nostro database usa int.
     name_lower = pokemon_name.lower().strip()
 
     try:
@@ -131,7 +130,6 @@ def get_team_by_id(team_id: int) -> Tuple[Dict[str, Any], int]:
     detailed_pokemon: List[Dict[str, Any]] = []
 
     # 1. Recupera i dettagli arricchiti per ciascun Pokémon
-    # NOTA: Queste sono le chiamate di rete bloccanti!
     for name in team.get('pokemon_names', []):
         details = _get_pokemon_details_sync(name)
         print(details)
@@ -141,7 +139,6 @@ def get_team_by_id(team_id: int) -> Tuple[Dict[str, Any], int]:
     enriched_team['id'] = enriched_team['id']  # Conversione ID a stringa
     enriched_team['pokemon_details'] = detailed_pokemon
 
-    # Rimuoviamo la chiave 'id' che era int e ne lasciamo solo una string
     # Rimuoviamo la chiave 'members_count' aggiunta nella create_team
     if 'members_count' in enriched_team:
         del enriched_team['members_count']
