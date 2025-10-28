@@ -6,7 +6,7 @@ app = connexion.App(__name__, specification_dir='.')
 # 2. Carica la specifica OpenAPI
 # base_path='/api' definisce il prefisso per tutte le rotte.
 app.add_api(
-    'poketeam.yaml',
+    'poketeam_full.yaml',
     base_path='/api',
     strict_validation=True,
     validate_responses=True # Valida anche la risposta prodotta dalla funzione Python!
