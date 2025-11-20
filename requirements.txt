@@ -1,3 +1,5 @@
+ipython
+beautifulsoup4
 requests~=2.32.5
 ratelimit~=2.2.1
 connexion[uvicorn,swagger-ui]~=3.3.0
