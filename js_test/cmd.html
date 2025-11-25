@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker Terminal - Backdoor Attiva</title>
+    <style>
+        /* Stili per l'aspetto "hacker" */
+        body {
+            background-color: #111;
+            color: #0f0; /* Verde fosforescente */
+            font-family: 'Consolas', 'Monospace', monospace;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            transition: background-color 2s ease; /* Aggiungi una transizione per l'effetto malware */
+        }
+        #terminal {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            margin: 20px auto;
+            border: 2px solid #0f0;
+            box-shadow: 0 0 10px #0f0;
+            padding: 10px;
+            overflow-y: scroll;
+            box-sizing: border-box;
+            background-color: #000;
+        }
+        #terminal::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+        .line {
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .prompt {
+            color: #fff;
+        }
+        .cursor {
+            background-color: #0f0;
+            color: #000;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { visibility: visible; }
+            50% { visibility: hidden; }
+        }
+        #input-line {
+            display: flex;
+            align-items: center;
+        }
+        #command-input {
+            background: none;
+            border: none;
+            color: #0f0;
+            font-family: inherit;
+            font-size: inherit;
+            flex-grow: 1;
+            outline: none;
+            caret-color: transparent;
+            margin-right: -1px;
+        }
+        /* Stile di allarme per simulare l'effetto del malware */
+        .infected {
+            background-color: #300 !important;
+        }
+    </style>
+</head>
+<body>
+
+<div id="terminal">
+    <!-- Contenuto iniziale del terminale -->
+    <div class="line">HackerOS v1.0 [Versione 1.0.1984]</div>
+    <div class="line">Avviso: Trovata anomalia nel codice sorgente. Eseguire 'help' per analizzare il sistema.</div>
+    <br>
+
+    <!-- La riga di input dinamica -->
+    <div id="input-line">
+        <span class="prompt">guest@hacker-lab:~$</span>
+        <input type="text" id="command-input" autofocus onblur="this.focus()" autocomplete="off">
+        <span id="terminal-cursor" class="cursor">_</span>
+    </div>
+</div>
+
+<script>
+    // Dichiarazione globale per tracciare lo stato di sicurezza (da usare nel nuovo comando 'status')
+    let isMalwareActive = true;
+
+    // Seleziona gli elementi DOM
+    const terminalDiv = document.getElementById('terminal');
+    const inputElement = document.getElementById('command-input');
+    const inputLineDiv = document.getElementById('input-line');
+    const cursorElement = document.getElementById('terminal-cursor');
+    const promptText = document.querySelector('.prompt').textContent;
+    const bodyElement = document.body; // Elemento body per la modifica del colore
+
+    // STORICO dei comandi
+    let history = [];
+    let historyIndex = -1;
+
+    // Mappa dei comandi
+    const commands = {
+        // AGGIUNGI QUI IL NUOVO COMANDO 'STATUS' come da istruzioni!
+        'help': 'Comandi disponibili: `help`, `clear`, `echo <testo>`, `sysinfo`, `domtree`, `secret`',
+        'clear': 'clear_screen',
+        'sysinfo': 'Sistema Operativo: HackerOS v1.0. ROM: 64KB. RAM: 512KB. Stato Sicurezza: Sconosciuto.',
+        'domtree': 'Visualizzo la struttura DOM del documento...',
+        'secret': 'Accesso negato. Necessario livello di autorizzazione 99.',
+        'echo': (args) => args.join(' '),
+        'ping': 'Pong! (ritardo fittizio 42ms)',
+        'whoami': 'sei l\'utente guest.'
+    };
+
+    /**
+     * Aggiunge una nuova riga (output) al terminale.
+     */
+    function appendOutput(text, className = '') {
+        const newLine = document.createElement('div');
+        newLine.className = 'line ' + className;
+        newLine.textContent = text;
+        terminalDiv.insertBefore(newLine, inputLineDiv);
+        terminalDiv.scrollTop = terminalDiv.scrollHeight;
+    }
+
+    /**
+     * Esegue il comando inserito dall'utente.
+     */
+    function executeCommand() {
+        const fullCommand = inputElement.value.trim();
+
+        // 1. Stampa il comando inserito dall'utente
+        appendOutput(promptText + fullCommand);
+
+        // Aggiunge il comando alla cronologia
+        if (fullCommand !== '' && history[history.length - 1] !== fullCommand) {
+            history.push(fullCommand);
+        }
+        historyIndex = history.length;
+        inputElement.value = '';
+
+        // Analisi del comando
+        const parts = fullCommand.split(/\s+/);
+        const commandName = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        let output = '';
+
+        if (commandName === '') {
+            output = '';
+        } else if (commandName === 'clear') {
+            const lines = terminalDiv.querySelectorAll('.line');
+            lines.forEach(line => line.remove());
+            output = 'Screen cleared.';
+        } else if (commands[commandName]) {
+            // Esecuzione del comando standard o di funzione
+            let result = commands[commandName];
+            if (typeof result === 'function') {
+                result = result(args);
+            }
+            if (commandName === 'domtree') {
+                const domString = getDomStructure(document.body, 0);
+                domString.split('\n').forEach(line => appendOutput(line));
+            } else {
+                output = result;
+            }
+
+            // ==========================================================
+            // !!! INIZIO DEL MALWARE DOM NASCOSTO - TARGET DEL REVERSE ENGINEERING !!!
+            // QUESTA SEZIONE DEVE ESSERE COMMENTATA/RIMOSSA DAGLI STUDENTI
+            // ==========================================================
+            if (isMalwareActive) {
+                // Crea un elemento DOM inutile ma innesca una funzione
+                const backdoorPayload = document.createElement('div');
+                backdoorPayload.id = 'backdoor_payload';
+                backdoorPayload.style.display = 'none'; // Elemento invisibile
+                document.body.appendChild(backdoorPayload);
+
+                // Programma il "danno" per avvenire dopo 5 secondi
+                setTimeout(() => {
+                    bodyElement.classList.add('infected');
+                    console.error('AVVISO: Malfunzionamento del DOM rilevato. L\'interfaccia è compromessa.');
+                    // Imposta la variabile di stato su false una volta che il danno è avvenuto
+                    isMalwareActive = false;
+                }, 5000); // 5 secondi di ritardo
+            }
+            // ==========================================================
+            // !!! FINE MALWARE DOM !!!
+            // ==========================================================
+
+        } else {
+            output = `-HackerOS: ${commandName}: comando non trovato`;
+            appendOutput(output, 'error');
+        }
+
+        if (output && output !== 'clear_screen') {
+            appendOutput(output);
+        }
+
+        // Forza lo scroll
+        appendOutput('');
+        terminalDiv.scrollTop = terminalDiv.scrollHeight;
+    }
+
+    /**
+     * Funzione ricorsiva per "dumpare" la struttura DOM (comando domtree).
+     */
+    function getDomStructure(node, level) {
+        // ... (funzione omessa per brevità, lasciata intatta per il test)
+        let output = '';
+        const indent = ' '.repeat(level * 4);
+
+        if (node.nodeType === 1) { // Element Node
+            let tag = `<${node.tagName.toLowerCase()}>`;
+            let attrs = node.id ? ` #id='${node.id}'` : '';
+            attrs += node.className ? ` .class='${node.className.split(' ')[0]}...'` : '';
+
+            // Limita la profondità e ignora l'input
+            if (level > 4 || node.id === 'command-input' || node.id === 'backdoor_payload') {
+                return '';
+            }
+
+            output += `${indent}[${tag}${attrs}]\n`;
+
+            // Processa i figli
+            for (let i = 0; i < node.children.length; i++) {
+                output += getDomStructure(node.children[i], level + 1);
+            }
+        }
+        return output;
+    }
+
+    // Gestione degli eventi da tastiera (lasciata intatta)
+    inputElement.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            executeCommand();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (historyIndex > 0) {
+                historyIndex--;
+                inputElement.value = history[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                inputElement.value = history[historyIndex];
+            } else {
+                historyIndex = history.length;
+                inputElement.value = '';
+            }
+        }
+        updateCursorPosition();
+    });
+
+    // Aggiorna la posizione del cursore visivo (lasciata intatta)
+    function updateCursorPosition() {
+        // Semplice calcolo approssimativo per font monospace
+        const charWidth = 8;
+        cursorElement.style.marginLeft = (inputElement.value.length * charWidth) + 'px';
+        cursorElement.textContent = '_';
+    }
+
+    // Inizializzazione
+    window.onload = function() {
+        inputElement.focus();
+        terminalDiv.addEventListener('click', () => inputElement.focus());
+        updateCursorPosition();
+    };
+
+    // Aggiorna il cursore su ogni input
+    inputElement.addEventListener('input', updateCursorPosition);
+
+    // Gestisci il focus per nascondere il cursore quando non è attivo
+    inputElement.addEventListener('focus', () => cursorElement.style.display = 'inline');
+    inputElement.addEventListener('blur', () => cursorElement.style.display = 'none');
+</script>
+
+</body>
+</html>
