@@ -3,7 +3,7 @@
 - **Avanzata**: Introduci uno switch all'interno di `popup.html` che permetta di abilitare/disabilitare la funzionalità.
 
 ---
-## istruzioni per sviluppare ed installare l'estensione
+### istruzioni per sviluppare ed installare l'estensione
 1. Crea una nuova cartella vuota chiamata Rickrollify. Inseriscici i file di questa cartella.
 
 2. File Manifest (`manifest.json`)
