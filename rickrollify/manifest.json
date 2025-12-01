@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Rickrollify",
-  "version": "0.0.1b",
+  "version": "0.0.1",
   "description": "Modifica tutti i link di una pagina per reindirizzare a un Rickroll.",
   "icons": {
     "16": "icon16.png",
@@ -19,7 +19,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["rickrollify.js"]
+      "js": ["rickrollify_sol.js"]
     }
   ],
   "permissions": [
