@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Manager Docker Semplificato</title>
+    <!-- Tailwind CSS per lo styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .card { transition: all 0.3s ease-in-out; }
+        /* Stile per i tag di stato */
+        .status-pill { padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="p-4 md:p-8 max-w-6xl mx-auto">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700 mb-6 border-b-4 border-indigo-400 pb-2 text-center">
+        Gestore Media Musicale (Soluzione Semplificata)
+    </h1>
+    <p class="text-center text-gray-600 mb-8">
+        Depositare file musicali (`.mp3`, `.flac`, `.ogg`) nella cartella <code class="bg-yellow-100 p-1 rounded font-mono">input</code> del progetto.
+    </p>
+
+    <!-- Pannello di Stato e Configurazione -->
+    <div class="bg-white shadow-xl rounded-xl p-6 mb-8 border-t-8 border-indigo-500">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Configurazione</h2>
+        <div class="flex flex-wrap gap-4 text-sm mb-4">
+            <p><span class="font-medium text-gray-700">Stato Backend:</span>
+                <span class="status-pill" :class="status.processor_status.includes('Attivo') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">{{ status.processor_status }}</span>
+            </p>
+            <p><span class="font-medium text-gray-700">File Trovati:</span> <span class="text-blue-600 font-bold">{{ status.total_files }}</span></p>
+            <p><span class="font-medium text-gray-700">Cartella Output:</span> <code class="bg-gray-100 p-1 rounded">{{ status.output_dir }}</code></p>
+        </div>
+
+        <!-- Pattern di Rinomina -->
+        <div class="mt-4 p-4 border border-indigo-200 rounded-lg bg-indigo-50">
+            <label for="pattern" class="block text-sm font-medium text-indigo-800 mb-2">
+                Pattern di Rinomina e Percorso
+            </label>
+            <input
+                id="pattern"
+                v-model="namingPattern"
+                class="w-full border border-indigo-300 rounded-md p-2 text-sm font-mono focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="{artist}/{album}/{track:02d} - {title}.{ext}"
+            />
+            <p class="text-xs text-indigo-600 mt-1">
+                Esempio: <code class="font-mono">{artist}/{album}/{track:02d} - {title}.{ext}</code>. Variabili: <code>{artist}, {album}, {title}, {track}, {ext}</code>.
+            </p>
+        </div>
+
+    </div>
+
+    <h2 class="text-3xl font-bold text-gray-800 mb-4">File in Attesa di Processing ({{ status.total_files }})</h2>
+
+    <div v-if="status.total_files === 0" class="text-center py-12 bg-white rounded-xl shadow-md border-2 border-dashed border-gray-300">
+        <p class="text-gray-500 text-lg">Nessun file musicale trovato. Attendere il rilevamento Watchdog o aggiungerne uno.</p>
+    </div>
+
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+            v-for="file in status.files"
+            :key="file.filename"
+            class="card bg-white p-5 rounded-xl shadow-lg"
+            :class="file.status.includes('ERRORE') ? 'border-l-4 border-red-500' : 'border-l-4 border-blue-500'"
+        >
+            <p class="text-xs text-gray-500 mb-2 font-mono break-all line-clamp-1" :title="file.filepath">{{ file.filepath }}</p>
+            <h3 class="text-xl font-bold text-gray-900 mb-3 break-words">{{ file.filename }}</h3>
+
+            <!-- Dettagli Metadati -->
+            <dl class="text-sm space-y-2">
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Stato:</dt>
+                    <dd class="text-right">
+                        <span class="status-pill" :class="getStatusClass(file.status)">
+                            {{ file.status }}
+                        </span>
+                    </dd>
+                </div>
+                <div class="flex justify-between border-t border-gray-100 pt-2">
+                    <dt class="font-medium text-gray-600">Artista:</dt>
+                    <dd class="text-gray-900 break-words font-semibold">{{ file.artist }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Titolo:</dt>
+                    <dd class="text-gray-900 break-words">{{ file.title }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Album:</dt>
+                    <dd class="text-gray-900 break-words">{{ file.album }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Traccia:</dt>
+                    <dd class="text-gray-900 break-words">{{ file.track }}</dd>
+                </div>
+            </dl>
+
+            <button
+                @click="processFile(file.filename)"
+                class="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md hover:shadow-xl disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                :disabled="isProcessing"
+            >
+                <!-- Icona di caricamento (spinner) -->
+                <svg v-if="isProcessing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ isProcessing ? 'In elaborazione...' : 'Completa & Rinomina' }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal di Feedback (Sostituisce alert()) -->
+    <div v-if="modal.show" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="modal.show = false">
+        <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4" :class="modal.success ? 'text-green-600' : 'text-red-600'">
+                {{ modal.success ? 'Successo!' : 'Errore!' }}
+            </h3>
+            <p class="text-gray-700 mb-6">{{ modal.message }}</p>
+            <button @click="modal.show = false" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg">
+                Chiudi
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+    setup() {
+        // Stato reattivo dell'applicazione
+        const status = ref({
+            processor_status: 'Inizializzazione...',
+            input_dir: '/app/input',
+            output_dir: '/app/output',
+            naming_pattern: '{artist}/{album}/{track:02d} - {title}.{ext}',
+            total_files: 0,
+            files: []
+        });
+        const namingPattern = ref('{artist}/{album}/{track:02d} - {title}.{ext}');
+        const isProcessing = ref(false);
+        const modal = ref({ show: false, message: '', success: false });
+
+        // Funzione per mostrare il modal di feedback
+        const showModal = (message, success) => {
+            modal.value.message = message;
+            modal.value.success = success;
+            modal.value.show = true;
+        };
+
+        // Funzione per recuperare lo stato dal backend Python
+        const fetchStatus = async () => {
+            try {
+                // L'API è accessibile direttamente sulla radice del servizio Flask (porta 5000)
+                const response = await fetch('/api/status');
+                if (response.ok) {
+                    const data = await response.json();
+                    status.value = data;
+                    // Sincronizza il pattern di rinomina
+                    namingPattern.value = data.naming_pattern;
+                } else {
+                     status.value.processor_status = `Errore HTTP: ${response.status}`;
+                }
+            } catch (error) {
+                console.error("Errore nel recupero dello stato dal backend:", error);
+                status.value.processor_status = 'Errore di connessione API';
+            }
+        };
+
+        // Funzione per attivare MusicBrainz e la rinomina
+        const processFile = async (filename) => {
+            if (isProcessing.value) return;
+            isProcessing.value = true;
+
+            try {
+                const response = await fetch('/api/rename', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: filename, pattern: namingPattern.value })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showModal(result.message, true);
+                } else {
+                    showModal(`Errore (${response.status}): ${result.message}`, false);
+                }
+
+            } catch (error) {
+                console.error("Errore nell'invio della richiesta di rinomina:", error);
+                showModal("Errore di rete durante la rinomina.", false);
+            } finally {
+                isProcessing.value = false;
+                // Ricarica lo stato dopo l'operazione
+                await fetchStatus();
+            }
+        };
+
+        // Classe CSS basata sullo stato per colorare i tag
+        const getStatusClass = (statusText) => {
+            if (statusText.includes('ERRORE') || statusText.includes('Nessun tag')) {
+                return 'bg-red-100 text-red-700';
+            } else if (statusText.includes('MusicBrainz') || statusText.includes('difficile')) {
+                return 'bg-orange-100 text-orange-700';
+            } else if (statusText.includes('Metadati estratti')) {
+                return 'bg-blue-100 text-blue-700';
+            }
+            return 'bg-gray-100 text-gray-700';
+        };
+
+        onMounted(() => {
+            // Aggiorna lo stato ogni 3 secondi per un'esperienza quasi in tempo reale
+            setInterval(fetchStatus, 3000);
+            fetchStatus();
+        });
+
+        return {
+            status,
+            namingPattern,
+            isProcessing,
+            modal,
+            processFile,
+            getStatusClass
+        };
+    }
+}).mount('#app');
+</script>
+</body>
+</html>

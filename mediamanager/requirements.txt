@@ -1,0 +1,6 @@
+flask-cors
+watchdog
+mutagen
+musicbrainzngs
+requests~=2.32.5
+redis~=7.1.0
