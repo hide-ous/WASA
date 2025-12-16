@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  flask-api:
+    build: .
+    container_name: pokemon-flask
+    volumes:
+      - pokemon-db:/data
+    ports:
+      - "5000:5000"
+    depends_on:
+      - sqlite-cache
+
+  sqlite-cache:
+    image: busybox
+    container_name: pokemon-sqlite
+    volumes:
+      - pokemon-db:/data
+    command: tail -f /dev/null
+
+volumes:
+  pokemon-db:
